@@ -35,6 +35,22 @@ def get_author(data):
 def get_refs(data):
 	return data['article']['back']['ref-list']
 
+def get_names(ref):
+	names = []
+	if 'person-group' in ref['nlm-citation']:
+
+		person_group = ref['nlm-citation']['person-group']
+
+		# A referencia pode ter apenas autores ou tambem editores.
+		# Na duvida, transformo tudo numa lista
+		if not isinstance(person_group,list):
+			person_group = [person_group]
+
+		for person in person_group:
+			if person['@person-group-type'] == 'author':
+				names.extend(get_authors(person))
+
+	return names
 
 def get_linked_authors(data):
 	linked_authors = []
@@ -52,24 +68,6 @@ def get_linked_authors(data):
 		linked_authors.append(linked)
 
 	return linked_authors
-
-
-def get_names(ref):
-	names = []
-	if 'person-group' in ref['nlm-citation']:
-
-		person_group = ref['nlm-citation']['person-group']
-
-		# A referencia pode ter apenas autores ou tambem editores.
-		# Na duvida, transformo tudo numa lista
-		if not isinstance(person_group,list):
-			person_group = [person_group]
-
-		for person in person_group:
-			if person['@person-group-type'] == 'author':
-				names.extend(get_authors(person))
-
-	return names
 
 
 def print_csv(author, linked_authors):
