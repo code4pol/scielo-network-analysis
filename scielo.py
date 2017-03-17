@@ -72,9 +72,9 @@ def get_names(ref):
 	return names
 
 
-def print_csv(author, refs):
-	for ref in refs:
-		print("%s,%s,%s,%s" % (author,ref['id'],ref['type'],ref['names']))
+def print_csv(author, linked_authors):
+	for linked_author in linked_authors:
+		print("%s,%s,%s,%s" % (author,linked_author['id'],linked_author['type'],linked_author['names']))
 
 
 if __name__ == "__main__":
@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
 	author = get_author(data)
 	refs = get_refs(data)
-	referees = get_linked_authors(data)
+	linked = get_linked_authors(data)
 
-	print_csv(author, referees)
+	print_csv(author, linked)
 
