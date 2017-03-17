@@ -2,61 +2,89 @@ import urllib.request
 import re
 import xmltodict
 
-article_html_url = "http://www.scielo.br/scielo.php?script=sci_arttext&pid=S0104-026X2017000100031&lng=en&nrm=iso"
-article_id = re.search("http://.*pid=(.*?)&",article_html_url).group(1)
-article_pdf_url = "http://www.scielo.br/scieloOrg/php/articleXML.php?pid=%s&lang=en" % article_id
+def retrieve_data(article_html_url):
+	article_id = re.search("http://.*pid=(.*?)&",article_html_url).group(1)
+	article_pdf_url = "http://www.scielo.br/scieloOrg/php/articleXML.php?pid=%s&lang=en" % article_id
 
-file = urllib.request.urlopen(article_pdf_url)
-xml = file.read()
+	file = urllib.request.urlopen(article_pdf_url)
+	xml = file.read()
+	file.close()
 
-data = xmltodict.parse(xml)
-refs = data['article']['back']['ref-list']
+	return xmltodict.parse(xml)
 
-# E se houver mais de um author?
-contrib = data['article']['front']['article-meta']['contrib-group']['contrib']
-if contrib['@contrib-type'] == 'author':
-	author = "%s %s" % (contrib['name']['surname'], contrib['name']['given-names'])
 
-for ref in refs['ref']:
-	id = ref['@id']
-	type = ref['nlm-citation']['@citation-type']
-	referees = []
+def get_authors(person):
+	authors = []
+	if isinstance(person['name'],list):
+		for name in person['name']:
+			authors.append("%s %s" % (name['surname'], name['given-names']))
+	else:
+		name = person['name']
+		authors.append("%s %s" % (name['surname'], name['given-names']))
 
-	if 'article-title' in ref['nlm-citation']:
-		title = ref['nlm-citation']['article-title']['#text']
+	return authors
 
+
+def get_author(data):
+	# E se houver mais de um author?
+	contrib = data['article']['front']['article-meta']['contrib-group']['contrib']
+	if contrib['@contrib-type'] == 'author':
+		author = "%s %s" % (contrib['name']['surname'], contrib['name']['given-names'])
+
+
+def get_refs(data):
+	return data['article']['back']['ref-list']
+
+
+def get_linked_authors(data):
+	linked_authors = []
+
+	for ref in refs['ref']:
+		id = ref['@id']
+		type = ref['nlm-citation']['@citation-type']
+
+		if 'article-title' in ref['nlm-citation']:
+			title = ref['nlm-citation']['article-title']['#text']
+		else:
+			title = "?"
+
+		linked = { 'id' : id, 'type' : type, 'names' : get_names(ref)}
+		linked_authors.append(linked)
+
+	return linked_authors
+
+
+def get_names(ref):
+	names = []
 	if 'person-group' in ref['nlm-citation']:
 
 		person_group = ref['nlm-citation']['person-group']
 
-		if isinstance(person_group ,list): # autores e editores
+		# A referencia pode ter apenas autores ou tambem editores.
+		# Na duvida, transformo tudo numa lista
+		if not isinstance(person_group,list):
+			person_group = [person_group]
 
-			for person in person_group:
-
-				if person['@person-group-type'] == 'author':
-					if isinstance(person['name'],list):
-						for name in person['name']:
-							referees.append("%s %s" % (name['surname'], name['given-names']))
-					else:
-						name = person['name']
-						referees.append("%s %s" % (name['surname'], name['given-names']))
-
-		else: # so autores, provavelmente
-
-			person = person_group
-
+		for person in person_group:
 			if person['@person-group-type'] == 'author':
-				if isinstance(person['name'],list):
-					for name in person['name']:
-						referees.append("%s %s" % (name['surname'], name['given-names']))
-				else:
-					name = person['name']
-					referees.append("%s %s" % (name['surname'], name['given-names']))
+				names.extend(get_authors(person))
+
+	return names
 
 
-	for referee in referees:
-		print('%s,%s,%s,%s' % (author,id,type,referee))
+def print_csv(author, refs):
+	for ref in refs:
+		print("%s,%s,%s,%s" % (author,ref['id'],ref['type'],ref['names']))
 
 
-file.close()
+if __name__ == "__main__":
+	
+	article_html_url = "http://www.scielo.br/scielo.php?script=sci_arttext&pid=S0104-026X2017000100031&lng=en&nrm=iso"
+	data = retrieve_data(article_html_url)
+
+	author = get_author(data)
+	refs = get_refs(data)
+	referees = get_linked_authors(data)
+
+	print_csv(author, referees)
 
