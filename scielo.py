@@ -31,6 +31,8 @@ def get_author(data):
 	if contrib['@contrib-type'] == 'author':
 		author = "%s %s" % (contrib['name']['surname'], contrib['name']['given-names'])
 
+	return author
+
 
 def get_refs(data):
 	return data['article']['back']['ref-list']
@@ -83,6 +85,5 @@ if __name__ == "__main__":
 	author = get_author(data)
 	refs = get_refs(data)
 	linked = get_linked_authors(data)
-
 	print_csv(author, linked)
 
