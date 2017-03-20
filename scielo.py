@@ -74,7 +74,8 @@ def get_linked_authors(data):
 
 def print_csv(author, linked_authors):
 	for linked_author in linked_authors:
-		print("%s,%s,%s,%s" % (author,linked_author['id'],linked_author['type'],linked_author['names']))
+		for linked_name in linked_author['names']:
+			print("%s,%s,%s,%s" % (author,linked_author['id'],linked_author['type'],linked_name))
 
 
 if __name__ == "__main__":
