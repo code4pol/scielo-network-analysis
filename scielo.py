@@ -2,6 +2,8 @@ import urllib.request
 import re
 import xmltodict
 
+f = open('C:\\Users\\tayri_000\\Documents\\Mestrado\\Feminismo e conhecimento\\IDhtml.csv')
+
 def retrieve_data(article_html_url):
 	article_id = re.search("http://.*pid=(.*?)&",article_html_url).group(1)
 	article_pdf_url = "http://www.scielo.br/scieloOrg/php/articleXML.php?pid=%s&lang=en" % article_id
@@ -79,12 +81,16 @@ def print_csv(author, linked_authors):
 
 
 if __name__ == "__main__":
-	
-	article_html_url = "http://www.scielo.br/scielo.php?script=sci_arttext&pid=S0104-026X2017000100031&lng=en&nrm=iso"
-	data = retrieve_data(article_html_url)
 
-	author = get_author(data)
-	refs = get_refs(data)
-	linked = get_linked_authors(data)
-	print_csv(author, linked)
+	for l in f:
+
+			article_html_url = l
+	
+			#article_html_url = "http://www.scielo.br/scielo.php?script=sci_arttext&pid=S0104-026X2017000100031&lng=en&nrm=iso"
+			data = retrieve_data(article_html_url)
+
+			author = get_author(data)
+			refs = get_refs(data)
+			linked = get_linked_authors(data)
+			print_csv(author, linked)
 
